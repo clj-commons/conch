@@ -200,38 +200,41 @@
                   verbose)))
 
 (defn run-command [name args options]
-  (let [proc (apply conch/proc name (add-proc-args (map str args) options))
-        options (compute-buffer options)
-        {:keys [buffer out in err timeout verbose binary]} options
-        proc (queue-output proc buffer binary)
-        exit-code (future (if timeout
-                            (conch/exit-code proc timeout)
-                            (conch/exit-code proc)))]
-    (when in (future (get-drunk in proc)))
-    (let [proc-out (future (redirect out options :out proc))
-          proc-err (future (redirect err options :err proc))
-          proc-out @proc-out
-          proc-err @proc-err
-          verbose-out {:proc proc
-                       :exit-code exit-code
-                       :stdout proc-out
-                       :stderr proc-err}
-          result (cond
-                  verbose verbose-out
-                  (= (:seq options) :err) proc-err
-                  :else proc-out)]
-      ;; Not using `zero?` here because exit-code can be a keyword.
-      (if (= 0 @exit-code)
-        result
-        (cond (and (contains? options :throw)
-                   (:throw options))
-              (exit-exception verbose-out)
+  (let [proc (apply conch/proc name (add-proc-args (map str args) options))]
+    (try
+      (let [options (compute-buffer options)
+            {:keys [buffer out in err timeout verbose binary]} options
+            proc (queue-output proc buffer binary)
+            exit-code (future (if timeout
+                                (conch/exit-code proc timeout)
+                                (conch/exit-code proc)))]
+        (when in (future (get-drunk in proc)))
+        (let [proc-out (future (redirect out options :out proc))
+              proc-err (future (redirect err options :err proc))
+              proc-out @proc-out
+              proc-err @proc-err
+              verbose-out {:proc proc
+                           :exit-code exit-code
+                           :stdout proc-out
+                           :stderr proc-err}
+              result (cond
+                       verbose verbose-out
+                       (= (:seq options) :err) proc-err
+                       :else proc-out)]
+          ;; Not using `zero?` here because exit-code can be a keyword.
+          (if (= 0 @exit-code)
+            result
+            (cond (and (contains? options :throw)
+                       (:throw options))
+                  (exit-exception verbose-out)
 
-              (and (not (contains? options :throw))
-                   *throw*)
-              (exit-exception verbose-out)
+                  (and (not (contains? options :throw))
+                       *throw*)
+                  (exit-exception verbose-out)
 
-              :else result)))))
+                  :else result))))
+      (catch InterruptedException e
+        (conch/destroy proc)))))
 
 (defn execute [name & args]
   (let [end (last args)

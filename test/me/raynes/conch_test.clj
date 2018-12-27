@@ -134,3 +134,17 @@
     (testing "Environment is cleared if a program is called with :clear-env"
       (is (= "" (env {:throw true :clear-env true})))
       (is (not= "" (env {:throw true}))))))
+
+(comment
+
+(require '[me.raynes.conch :as sh])
+
+(sh/programs sleep ps grep)
+
+(def f (future (sleep "60")))
+
+(future-cancel f)
+
+(grep "sleep" {:in (ps "-ax")})
+
+)
