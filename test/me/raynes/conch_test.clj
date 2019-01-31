@@ -135,16 +135,13 @@
       (is (= "" (env {:throw true :clear-env true})))
       (is (not= "" (env {:throw true}))))))
 
-(comment
 
-(require '[me.raynes.conch :as sh])
-
-(sh/programs sleep ps grep)
-
-(def f (future (sleep "60")))
-
-(future-cancel f)
-
-(grep "sleep" {:in (ps "-ax")})
-
-)
+(deftest cancel-test
+  (sh/with-programs [sleep ps grep]
+    (testing "Destroy process when thread is interrupted."
+      (let [f (future (sleep "60"))]
+        ;give the task a chance to run
+        (Thread/sleep 1000)
+        ;then cancel
+        (future-cancel f)
+        (is (thrown? ExceptionInfo (grep "sleep" {:in (ps "-ax")})))))))
