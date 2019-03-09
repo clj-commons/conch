@@ -1,4 +1,4 @@
-(defproject clj-commons/conch "0.9.2-SNAPSHOT"
+(defproject clj-commons/conch "0.9.2"
   :license {:name "Eclipse Public License - v 1.0"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :url "https://github.com/clj-commons/conch"
