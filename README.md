@@ -1,6 +1,8 @@
 # conch
 
-[![Build Status](https://secure.travis-ci.org/Raynes/conch.png)](http://travis-ci.org/Raynes/conch)
+[![CircleCI](https://circleci.com/gh/clj-commons/conch.svg?style=svg)](https://circleci.com/gh/clj-commons/conch)
+[![Clojars Project](https://img.shields.io/clojars/v/clj-commons/conch.svg)](https://clojars.org/clj-commons/conch)
+[![cljdoc badge](https://cljdoc.org/badge/clj-commons/conch)](https://cljdoc.org/d/clj-commons/conch)
 
 Conch is actually two libraries. The first, `me.raynes.conch.low-level` is a simple low-level
 interface to the Java process APIs. The second and more interesting library is
@@ -10,9 +12,12 @@ an interface to low-level inspired by the Python
 The general idea is to be able to call programs just like you would call Clojure
 functions. See Usage for examples.
 
+This library is the continuation of Raynes/conch. Sadly Raynes passed away in 2016 so
+the clj-commons clojure organisation has taken over maintenance of this excellent library.
+
 ## Installation
 
-In Leiningen:
+With Leiningen:
 
 [![version](https://clojars.org/clj-commons/conch/latest-version.svg)](https://clojars.org/clj-commons/conch)
 
