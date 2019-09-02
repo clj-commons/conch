@@ -29,8 +29,9 @@
           (echo "hi" {:out writer})
           (is (= (str writer) "hi\n")))))))
 
-(defn input-stream-to-byte-array [is]
+(defn input-stream-to-byte-array
   "Convert an input stream is to byte array"
+  [is]
   (with-open [baos (java.io.ByteArrayOutputStream.)]
     (let [ba (byte-array 2000)]
       (loop [n (.read is ba 0 2000)]
@@ -39,8 +40,9 @@
           (recur (.read is ba 0 2000))))
       (.toByteArray baos))))
 
-(defn file-to-bytearray [file]
+(defn file-to-bytearray
   "Convert a file to a byte array"
+  [file]
   (let [is (clojure.java.io/input-stream file)]
     (input-stream-to-byte-array is)))
 

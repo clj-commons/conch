@@ -2,7 +2,10 @@
   "A simple but flexible library for shelling out from Clojure."
   (:refer-clojure :exclude [flush read-line])
   (:require [clojure.java.io :as io])
-  (:import (java.util.concurrent TimeUnit TimeoutException)))
+  (:import [java.util.concurrent TimeUnit TimeoutException]
+           [java.io InputStream OutputStream]))
+
+(set! *warn-on-reflection* true)
 
 (defn proc
   "Spin off another process. Returns the process's input stream,
@@ -16,7 +19,7 @@
   [& args]
   (let [[cmd args] (split-with (complement keyword?) args)
         args (apply hash-map args)
-        builder (ProcessBuilder. (into-array String cmd))
+        builder (ProcessBuilder. ^"[Ljava.lang.String;" (into-array String cmd))
         env (.environment builder)]
     (when (:clear-env args)
       (.clear env))
@@ -39,7 +42,7 @@
 (defn destroy
   "Destroy a process."
   [process]
-  (.destroy (:process process)))
+  (.destroy ^Process (:process process)))
 
 ;; .waitFor returns the exit code. This makes this function useful for
 ;; both getting an exit code and stopping the thread until a process
@@ -49,31 +52,35 @@
    the exit code. If timeout is passed, it is assumed to be milliseconds
    to wait for the process to exit. If it does not exit in time, it is
    killed (with or without fire)."
-  ([process] (.waitFor (:process process)))
+  ([process] (.waitFor ^Process (:process process)))
   ([process timeout]
-     (try
-       (.get (future (.waitFor (:process process))) timeout TimeUnit/MILLISECONDS)
-       (catch Exception e
-         (if (or (instance? TimeoutException e)
-                 (instance? TimeoutException (.getCause e)))
-           (do (destroy process)
-               :timeout)
-           (throw e))))))
+   (try
+     (let [^java.util.concurrent.Future fut
+           (future (.waitFor ^Process (:process process)))]
+       (.get fut timeout TimeUnit/MILLISECONDS))
+     (catch Exception e
+       (if (or (instance? TimeoutException e)
+               (instance? TimeoutException (.getCause e)))
+         (do (destroy process)
+             :timeout)
+         (throw e))))))
 
 (defn flush
   "Flush the output stream of a process."
   [process]
-  (.flush (:in process)))
+  (let [^OutputStream in (:in process)]
+    (.flush in)))
 
 (defn done
   "Close the process's output stream (sending EOF)."
   [proc]
-  (-> proc :in .close))
+  (let [^OutputStream in (:in proc)]
+    (.close in)))
 
 (defn stream-to
   "Stream :out or :err from a process to an ouput stream.
-  Options passed are fed to clojure.java.io/copy. They are :encoding to 
-  set the encoding and :buffer-size to set the size of the buffer. 
+  Options passed are fed to clojure.java.io/copy. They are :encoding to
+  set the encoding and :buffer-size to set the size of the buffer.
   :encoding defaults to UTF-8 and :buffer-size to 1024."
   [process from to & args]
   (apply io/copy (process from) to args))
